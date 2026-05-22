@@ -5,6 +5,7 @@ Desktop.ini
 
 # AI / IDE 缓存
 .claude/
+代码/.claude/
 conversations_export_*.jsonl
 
 # 日志
@@ -51,3 +52,7 @@ __pycache__/
 *.bin
 *.rar
 *.zip
+
+# 建模资料（单独放行，不上传整个目录则不添加此规则）
+!建模资料/
+!建模资料/**
