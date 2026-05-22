@@ -1,0 +1,25 @@
+# 系统文件
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# AI / IDE 缓存
+.claude/
+conversations_export_*.jsonl
+
+# 日志
+PerformanceLog.txt
+
+# SolidWorks 恢复文件
+* (~recovered)*
+*.~recovered.*
+
+# Python 缓存
+__pycache__/
+*.pyc
+
+# 编译中间文件
+*.o
+*.d
+*.elf
+*.map
