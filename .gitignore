@@ -10,9 +10,31 @@ conversations_export_*.jsonl
 # 日志
 PerformanceLog.txt
 
-# SolidWorks 恢复文件
-* (~recovered)*
-*.~recovered.*
+# 项目资料包（引用资料太多，不纳入版本控制）
+项目资料包/
+
+# 3D 模型文件
+*.SLDPRT
+*.SLDASM
+*.STEP
+*.STP
+*.STL
+*.IGS
+*.IGES
+*.SLDDRW
+*.DXF
+*.CWR
+*.DF1
+*.DF2
+*.gsz
+*.LOG
+*.MFC
+
+# PDF 文档
+*.pdf
+
+# Windows 临时文件
+~$*
 
 # Python 缓存
 __pycache__/
@@ -23,3 +45,9 @@ __pycache__/
 *.d
 *.elf
 *.map
+
+# 二进制/可执行文件
+*.exe
+*.bin
+*.rar
+*.zip
