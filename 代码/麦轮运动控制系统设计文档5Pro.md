@@ -420,7 +420,7 @@ flowchart LR
 可选 PI 公式：
 
 ```text
-e_i(k) = rpm_ref_i(k) - rpm_fb_i(k)
+e_i(k) = rpm_ref_i(k) - rpm_fb_i(k)   // RPM
 I_i(k) = clamp(I_i(k-1) + e_i(k) * T_pid, I_min, I_max)
 delta_i = Kp * e_i(k) + Ki * I_i(k)
 rpm_cmd_i = clamp(rpm_ref_i + delta_i, -RPM_LIMIT, RPM_LIMIT)
@@ -561,7 +561,7 @@ v_4 = v_x - v_y + K * omega      // 后右 RR
 将轮线速度转换为电机目标转速：
 
 ```text
-rpm_i = v_i / (π * D) * 60
+rpm_i = v_i / (π * D) * 60      // 单位: RPM
 ```
 
 其中 `D = 0.075 m`。
@@ -571,7 +571,7 @@ rpm_i = v_i / (π * D) * 60
 读取到四轮实际 RPM 后，先转换为轮线速度：
 
 ```text
-v_i = rpm_i * (π * D) / 60
+v_i = rpm_i * (π * D) / 60      // 结果: m/s
 ```
 
 在同一套符号定义下，车体速度可估计为：
@@ -621,7 +621,7 @@ typedef struct {
 } ChassisVel_t;
 
 typedef struct {
-    float wheel_rpm[4];     // FL, FR, RL, RR，带符号
+    float wheel_rpm[4];     // FL, FR, RL, RR，单位: RPM
 } WheelRpm_t;
 
 void Mecanum_InverseKinematics(
@@ -651,13 +651,13 @@ function Mecanum_InverseKinematics(cmd, yaw_rad, field_oriented, rpm_limit):
 
     omega = cmd.omega
 
-    wheel_v[FL] = vx - vy - K * omega
-    wheel_v[FR] = vx + vy + K * omega
-    wheel_v[RL] = vx + vy - K * omega
-    wheel_v[RR] = vx - vy + K * omega
+    wheel_v[FL] = vx - vy - K * omega   // m/s
+    wheel_v[FR] = vx + vy + K * omega   // m/s
+    wheel_v[RL] = vx + vy - K * omega   // m/s
+    wheel_v[RR] = vx - vy + K * omega   // m/s
 
     for i in 0..3:
-        rpm[i] = wheel_v[i] / (PI * D) * 60.0
+        rpm[i] = wheel_v[i] / (PI * D) * 60.0   // RPM
 
     // 等比缩放，保持运动方向不变
     max_abs = max(abs(rpm[0]), abs(rpm[1]), abs(rpm[2]), abs(rpm[3]))
@@ -688,7 +688,7 @@ function ConvertRpmToZdtCommand(i, rpm_signed):
     else:
         dir = CCW
 
-    speed_abs = abs(rpm_motor)
+    speed_abs = abs(rpm_motor)   // RPM
     speed_reg = round(speed_abs * ZDT_SPEED_MODE_SCALE)
     speed_reg = clamp(speed_reg, 0, 0xFFFF)
 
@@ -1295,7 +1295,7 @@ flowchart TD
 #define LASER_UPDATE_PERIOD_MS       50u
 
 // 缩放系数，联调后确认
-#define ZDT_SPEED_MODE_SCALE         1.0f
+#define ZDT_SPEED_MODE_SCALE         1.0f   // RPM 缩放系数
 #define ZDT_SPEED_FEEDBACK_SCALE     1.0f
 ```
 

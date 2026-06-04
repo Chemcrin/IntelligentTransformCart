@@ -1,0 +1,73 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ---------------------- 1. 输入原始序列 X(0) ----------------------
+# 示例：你可以换成自己的数据
+X0 = np.array([2.874, 3.278, 3.39, 3.679, 3.77, 3.8])
+n = len(X0)
+
+# ---------------------- 2. 一次累加生成 X(1) ----------------------
+X1 = np.cumsum(X0)  # 1-AGO: x(1)(k) = sum_{i=1}^k x(0)(i)
+
+# ---------------------- 3. 生成均值序列 Z(1) ----------------------
+Z1 = np.zeros(n-1)
+for k in range(1, n):
+    Z1[k-1] = 0.5 * (X1[k] + X1[k-1])  # z(1)(k) = 1/2(x(1)(k)+x(1)(k-1))
+
+# ---------------------- 4. 最小二乘估计参数 a, b ----------------------
+# GM(1,1) 均值形式：x(0)(k) + a z(1)(k) = b
+# 写成矩阵形式：Y = B * [a; b]
+Y = X0[1:].reshape(-1, 1)  # Y = [x(0)(2), x(0)(3), ..., x(0)(n)]^T
+B = np.hstack((-Z1.reshape(-1, 1), np.ones((n-1, 1))))  # B = [-z(1)(2) 1; ...; -z(1)(n) 1]
+
+# 求解参数
+params = np.linalg.inv(B.T @ B) @ B.T @ Y
+a, b = params.flatten()
+print(f"估计参数 a = {a:.6f}, b = {b:.6f}")
+
+# ---------------------- 5. 建立时间响应函数（预测模型） ----------------------
+# x^(1)(k+1) = (x(0)(1) - b/a) * exp(-a*k) + b/a
+x1_hat = np.zeros(n)
+x1_hat[0] = X0[0]  # 初始条件：x^(1)(1) = x(0)(1)
+for k in range(1, n):
+    x1_hat[k] = (X0[0] - b/a) * np.exp(-a * k) + b/a
+
+# ---------------------- 6. 累减还原，得到原始序列预测值 ----------------------
+X0_hat = np.zeros(n)
+X0_hat[0] = x1_hat[0]
+for k in range(1, n):
+    X0_hat[k] = x1_hat[k] - x1_hat[k-1]
+
+# ---------------------- 7. 模型检验：残差、相对误差、平均相对误差 ----------------------
+residual = X0 - X0_hat
+relative_error = np.abs(residual / X0)
+mean_relative_error = np.mean(relative_error) * 100
+print(f"平均相对误差: {mean_relative_error:.2f}%")
+
+# ---------------------- 8. 预测未来 m 个值（可选） ----------------------
+m = 3  # 预测未来3个点
+x1_future = []
+for k in range(n, n+m):
+    x1_future.append((X0[0] - b/a) * np.exp(-a * k) + b/a)
+x1_future = np.array(x1_future)
+
+# 累减还原未来预测值
+X0_future = np.zeros(m)
+X0_future[0] = x1_future[0] - x1_hat[-1]
+for i in range(1, m):
+    X0_future[i] = x1_future[i] - x1_future[i-1]
+
+print("原始序列预测值:", X0_hat)
+print("未来预测值:", X0_future)
+
+# ---------------------- 9. 可视化结果 ----------------------
+plt.figure(figsize=(10, 6))
+plt.plot(range(1, n+1), X0, 'o-', label='原始序列 X(0)')
+plt.plot(range(1, n+1), X0_hat, 's--', label='GM(1,1) 拟合值')
+plt.plot(range(n+1, n+m+1), X0_future, '^--', label='GM(1,1) 预测值')
+plt.xlabel('时间 k')
+plt.ylabel('数值')
+plt.title('GM(1,1) 灰色预测模型结果')
+plt.legend()
+plt.grid(True)
+plt.show()
