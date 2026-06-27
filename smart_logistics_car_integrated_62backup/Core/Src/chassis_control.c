@@ -1,0 +1,188 @@
+#include "chassis_control.h"
+#include "mecanum_kinematics.h"
+#include "motor_manager.h"
+#include "mecanum_config.h"
+
+static MecanumState_t g_chassis_state = MECANUM_STATE_IDLE;
+static MecanumVelocity_t g_target_vel = { 0.0f, 0.0f, 0.0f };
+static WheelRpm_t g_last_rpm = { { 0.0f, 0.0f, 0.0f, 0.0f } };
+static uint32_t g_last_cmd_tick = 0u;
+static uint32_t g_last_ctrl_tick = 0u;
+static uint32_t g_last_feedback_tick = 0u;
+static uint8_t g_external_emergency = 0u;
+
+static float clampf_chassis(float v, float min_v, float max_v)
+{
+    if (v < min_v) return min_v;
+    if (v > max_v) return max_v;
+    return v;
+}
+
+static uint8_t velocity_is_zero(const MecanumVelocity_t *vel)
+{
+    if (vel == 0) {
+        return 1u;
+    }
+
+    return ((vel->vx_mps < 0.001f) && (vel->vx_mps > -0.001f) &&
+            (vel->vy_mps < 0.001f) && (vel->vy_mps > -0.001f) &&
+            (vel->wz_radps < 0.001f) && (vel->wz_radps > -0.001f));
+}
+
+void ChassisControl_Init(void)
+{
+    MotorManager_Init();
+    g_target_vel.vx_mps = 0.0f;
+    g_target_vel.vy_mps = 0.0f;
+    g_target_vel.wz_radps = 0.0f;
+    g_last_cmd_tick = HAL_GetTick();
+    g_last_ctrl_tick = HAL_GetTick();
+    g_last_feedback_tick = HAL_GetTick();
+
+    if (MotorManager_EnableAll(1u) == MECANUM_OK) {
+        (void)MotorManager_StopAll();
+        g_chassis_state = MECANUM_STATE_READY;
+    } else {
+        g_chassis_state = MECANUM_STATE_FAULT;
+    }
+}
+
+MecanumResult_t ChassisControl_SetVelocity(const MecanumVelocity_t *vel)
+{
+    if (vel == 0) {
+        return MECANUM_BAD_PARAM;
+    }
+    if ((g_chassis_state == MECANUM_STATE_EMERGENCY_STOP) || (g_chassis_state == MECANUM_STATE_FAULT)) {
+        return MECANUM_FAULT_LOCKED;
+    }
+
+    g_target_vel.vx_mps = clampf_chassis(vel->vx_mps, -MECANUM_MAX_VX_MPS, MECANUM_MAX_VX_MPS);
+    g_target_vel.vy_mps = clampf_chassis(vel->vy_mps, -MECANUM_MAX_VY_MPS, MECANUM_MAX_VY_MPS);
+    g_target_vel.wz_radps = clampf_chassis(vel->wz_radps, -MECANUM_MAX_WZ_RADPS, MECANUM_MAX_WZ_RADPS);
+    g_last_cmd_tick = HAL_GetTick();
+
+    g_chassis_state = velocity_is_zero(&g_target_vel) ? MECANUM_STATE_READY : MECANUM_STATE_RUNNING;
+
+    return MECANUM_OK;
+}
+
+MecanumResult_t ChassisControl_Stop(void)
+{
+    MecanumResult_t ret;
+
+    g_target_vel.vx_mps = 0.0f;
+    g_target_vel.vy_mps = 0.0f;
+    g_target_vel.wz_radps = 0.0f;
+    g_last_cmd_tick = HAL_GetTick();
+    ret = MotorManager_StopAll();
+    g_chassis_state = (ret == MECANUM_OK) ? MECANUM_STATE_STOP : MECANUM_STATE_FAULT;
+
+    return ret;
+}
+
+MecanumResult_t ChassisControl_EmergencyStop(void)
+{
+    g_target_vel.vx_mps = 0.0f;
+    g_target_vel.vy_mps = 0.0f;
+    g_target_vel.wz_radps = 0.0f;
+    g_chassis_state = MECANUM_STATE_EMERGENCY_STOP;
+    return MotorManager_EmergencyStop();
+}
+
+MecanumResult_t ChassisControl_ClearEmergencyStop(void)
+{
+    if (g_chassis_state != MECANUM_STATE_EMERGENCY_STOP) {
+        return MECANUM_OK;
+    }
+
+    g_external_emergency = 0u;
+    if (MotorManager_EnableAll(1u) != MECANUM_OK) {
+        g_chassis_state = MECANUM_STATE_FAULT;
+        return MECANUM_ERROR;
+    }
+    (void)MotorManager_StopAll();
+    g_chassis_state = MECANUM_STATE_READY;
+    return MECANUM_OK;
+}
+
+MecanumResult_t ChassisControl_ClearFault(void)
+{
+    if (g_chassis_state != MECANUM_STATE_FAULT) {
+        return MECANUM_OK;
+    }
+
+    if (MotorManager_EnableAll(1u) != MECANUM_OK) {
+        return MECANUM_ERROR;
+    }
+    (void)MotorManager_StopAll();
+    g_chassis_state = MECANUM_STATE_READY;
+    return MECANUM_OK;
+}
+
+void ChassisControl_PeriodicTask(void)
+{
+    uint32_t now = HAL_GetTick();
+    MecanumWheelSpeed_t wheel_mps;
+    WheelRpm_t wheel_rpm;
+    float dt_s;
+
+    if (g_external_emergency != 0u) {
+        (void)ChassisControl_EmergencyStop();
+        return;
+    }
+
+    if ((g_chassis_state == MECANUM_STATE_EMERGENCY_STOP) || (g_chassis_state == MECANUM_STATE_FAULT)) {
+        return;
+    }
+
+    if ((now - g_last_feedback_tick) >= MOTOR_FEEDBACK_PERIOD_MS) {
+        g_last_feedback_tick = now;
+        (void)MotorManager_UpdateFeedback();
+        if (MotorManager_HasFault() != 0u) {
+            (void)MotorManager_StopAll();
+            g_chassis_state = MECANUM_STATE_FAULT;
+            return;
+        }
+    }
+
+    if ((now - g_last_cmd_tick) > CHASSIS_COMMAND_TIMEOUT_MS) {
+        (void)ChassisControl_Stop();
+        return;
+    }
+
+    if ((now - g_last_ctrl_tick) < CHASSIS_CTRL_PERIOD_MS) {
+        return;
+    }
+
+    dt_s = (float)(now - g_last_ctrl_tick) * 0.001f;
+    g_last_ctrl_tick = now;
+
+    Mecanum_InverseKinematics(&g_target_vel, &wheel_mps, &wheel_rpm);
+    Mecanum_LimitWheelSpeed(&wheel_rpm, &g_last_rpm, dt_s);
+
+    if (MotorManager_SetWheelRpm(&wheel_rpm) == MECANUM_OK) {
+        g_last_rpm = wheel_rpm;
+        if (velocity_is_zero(&g_target_vel) != 0u) {
+            g_chassis_state = MECANUM_STATE_READY;
+        } else {
+            g_chassis_state = MECANUM_STATE_RUNNING;
+        }
+    } else {
+        g_chassis_state = MECANUM_STATE_FAULT;
+    }
+}
+
+MecanumState_t ChassisControl_GetState(void)
+{
+    return g_chassis_state;
+}
+
+MecanumVelocity_t ChassisControl_GetTargetVelocity(void)
+{
+    return g_target_vel;
+}
+
+void ChassisControl_SetExternalEmergency(uint8_t active)
+{
+    g_external_emergency = active;
+}
