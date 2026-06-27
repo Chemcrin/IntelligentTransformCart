@@ -1,0 +1,3 @@
+../Core/Src/sensors.c:7:13:sensor_refresh_snapshot	2
+../Core/Src/sensors.c:41:6:sensor_update	1
+../Core/Src/sensors.c:48:6:sensor_get_snapshot	3

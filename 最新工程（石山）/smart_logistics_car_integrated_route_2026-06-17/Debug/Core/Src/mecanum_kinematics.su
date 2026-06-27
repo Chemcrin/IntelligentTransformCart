@@ -1,0 +1,7 @@
+../Core/Src/mecanum_kinematics.c:6:14:absf_local	16	static
+../Core/Src/mecanum_kinematics.c:11:14:clampf_local	24	static
+../Core/Src/mecanum_kinematics.c:18:7:Mecanum_WheelMpsToRpm	16	static
+../Core/Src/mecanum_kinematics.c:23:7:Mecanum_RpmToWheelMps	16	static
+../Core/Src/mecanum_kinematics.c:28:6:Mecanum_InverseKinematics	40	static
+../Core/Src/mecanum_kinematics.c:49:6:Mecanum_ForwardKinematics	32	static
+../Core/Src/mecanum_kinematics.c:70:6:Mecanum_LimitWheelSpeed	64	static

@@ -1,0 +1,141 @@
+#ifndef COMPETITION_ROUTE_H
+#define COMPETITION_ROUTE_H
+
+#include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/*
+ * Lightweight fixed-route executor for the logistics car chassis.
+ *
+ * Coordinate convention follows the existing mecanum module:
+ *   +vx: strafe left, -vx: strafe right
+ *   +vy: move forward, -vy: move backward
+ *   +wz: counter-clockwise rotation after chassis sign calibration
+ *
+ * The module is intentionally open-loop for translation distance because the
+ * current project does not yet expose calibrated odometry. Translation steps are
+ * executed by time = distance / configured speed. Rotation steps use IMU yaw
+ * from Sensor_GetSnapshot() whenever IMU data is valid.
+ */
+
+#ifndef COMPETITION_ROUTE_AUTO_START
+#define COMPETITION_ROUTE_AUTO_START              1U
+#endif
+
+#ifndef COMPETITION_ROUTE_REQUIRE_RPI_LINK
+#define COMPETITION_ROUTE_REQUIRE_RPI_LINK        0U  /* DEBUG: 0U allows fixed-route startup without Raspberry Pi link. Restore to 1U for competition. */
+#endif
+
+#ifndef COMPETITION_ROUTE_ABORT_ON_LASER_INVALID
+#define COMPETITION_ROUTE_ABORT_ON_LASER_INVALID  1U
+#endif
+
+#ifndef COMPETITION_ROUTE_FORWARD_SPEED_MPS
+#define COMPETITION_ROUTE_FORWARD_SPEED_MPS       0.18f
+#endif
+
+#ifndef COMPETITION_ROUTE_STRAFE_SPEED_MPS
+#define COMPETITION_ROUTE_STRAFE_SPEED_MPS        0.14f
+#endif
+
+#ifndef COMPETITION_ROUTE_ROTATE_MAX_WZ_RADPS
+#define COMPETITION_ROUTE_ROTATE_MAX_WZ_RADPS     0.45f
+#endif
+
+#ifndef COMPETITION_ROUTE_ROTATE_MIN_WZ_RADPS
+#define COMPETITION_ROUTE_ROTATE_MIN_WZ_RADPS     0.16f
+#endif
+
+#ifndef COMPETITION_ROUTE_ROTATE_KP
+#define COMPETITION_ROUTE_ROTATE_KP               1.25f
+#endif
+
+#ifndef COMPETITION_ROUTE_ROTATE_TOL_RAD
+#define COMPETITION_ROUTE_ROTATE_TOL_RAD          0.035f   /* about 2 deg */
+#endif
+
+#ifndef COMPETITION_ROUTE_ROTATE_STABLE_COUNT
+#define COMPETITION_ROUTE_ROTATE_STABLE_COUNT     3U
+#endif
+
+#ifndef COMPETITION_ROUTE_ROTATE_TIMEOUT_MARGIN_MS
+#define COMPETITION_ROUTE_ROTATE_TIMEOUT_MARGIN_MS 2500U
+#endif
+
+#ifndef COMPETITION_ROUTE_LASER_ABORT_LEVEL
+#define COMPETITION_ROUTE_LASER_ABORT_LEVEL       3U
+#endif
+
+#ifndef COMPETITION_ROUTE_BOOT_WAIT_MS
+#define COMPETITION_ROUTE_BOOT_WAIT_MS            200U
+#endif
+
+typedef enum
+{
+    COMP_ROUTE_ACTION_FORWARD_MM = 0,
+    COMP_ROUTE_ACTION_STRAFE_MM,
+    COMP_ROUTE_ACTION_ROTATE_DEG,
+    COMP_ROUTE_ACTION_WAIT_MS,
+    COMP_ROUTE_ACTION_STOP
+} CompetitionRouteAction_t;
+
+typedef enum
+{
+    COMP_ROUTE_STATE_IDLE = 0,
+    COMP_ROUTE_STATE_WAIT_READY,
+    COMP_ROUTE_STATE_RUNNING,
+    COMP_ROUTE_STATE_FINISHED,
+    COMP_ROUTE_STATE_ABORTED
+} CompetitionRouteState_t;
+
+typedef enum
+{
+    COMP_ROUTE_ABORT_NONE = 0,
+    COMP_ROUTE_ABORT_LASER_TOO_CLOSE,
+    COMP_ROUTE_ABORT_LASER_INVALID,
+    COMP_ROUTE_ABORT_LINK_TIMEOUT,
+    COMP_ROUTE_ABORT_CHASSIS_FAULT,
+    COMP_ROUTE_ABORT_IMU_INVALID,
+    COMP_ROUTE_ABORT_CMD_ERROR,
+    COMP_ROUTE_ABORT_ROTATE_TIMEOUT
+} CompetitionRouteAbortReason_t;
+
+typedef struct
+{
+    CompetitionRouteAction_t action;
+    int32_t value;          /* mm for move/strafe, deg for rotate, ms for wait */
+    float speed;            /* m/s for move/strafe, rad/s for rotate; <=0 uses default */
+    uint32_t timeout_ms;    /* optional timeout override; 0 uses automatic timeout */
+} CompetitionRouteStep_t;
+
+typedef struct
+{
+    CompetitionRouteState_t state;
+    CompetitionRouteAbortReason_t abort_reason;
+    CompetitionRouteAction_t current_action;
+    uint16_t step_index;
+    uint16_t step_count;
+    uint32_t step_start_ms;
+    uint32_t step_elapsed_ms;
+    uint32_t step_duration_ms;
+    float rotate_target_yaw_rad;
+    float rotate_error_rad;
+    uint8_t rpi_link_seen;
+} CompetitionRouteStatus_t;
+
+void CompetitionRoute_Init(void);
+void CompetitionRoute_StartDefault(void);
+void CompetitionRoute_Stop(void);
+void CompetitionRoute_Loop(void);
+CompetitionRouteStatus_t CompetitionRoute_GetStatus(void);
+const char *CompetitionRoute_GetStateText(CompetitionRouteState_t state);
+const char *CompetitionRoute_GetAbortText(CompetitionRouteAbortReason_t reason);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* COMPETITION_ROUTE_H */

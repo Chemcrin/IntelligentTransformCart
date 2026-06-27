@@ -1,0 +1,7 @@
+../Core/Src/board_app.c:9:6:Board_App_Init	8	static
+../Core/Src/board_app.c:16:6:Board_App_Loop	8	static
+../Core/Src/board_app.c:23:6:Board_App_UartRxCpltCallback	16	static
+../Core/Src/board_app.c:28:19:Board_App_ZeroYaw	8	static
+../Core/Src/board_app.c:33:19:Board_App_StartImuGyroCalibration	8	static
+../Core/Src/board_app.c:38:19:Board_App_CalibrateImuAccelerometer	8	static
+../Core/Src/board_app.c:43:6:Board_App_GetSensorSnapshot	16	static

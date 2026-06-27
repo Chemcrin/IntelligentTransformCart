@@ -1,0 +1,71 @@
+#ifndef REMOTE_CMD_H
+#define REMOTE_CMD_H
+
+#include "mecanum_types.h"
+#include "stm32f1xx_hal.h"
+#include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define REMOTE_CMD_LINE_MAX                 80U
+#define REMOTE_CMD_HEARTBEAT_TIMEOUT_MS     600U
+#define REMOTE_CMD_STATUS_PERIOD_MS         0U
+#define REMOTE_CMD_SENSOR_STREAM_PERIOD_MS  100U
+#define REMOTE_CMD_LASER_STOP_LEVEL         3U
+#define REMOTE_CMD_REQUIRE_HEARTBEAT        0U  /* simplified: Raspberry Pi heartbeat timeout is ignored. */
+#define REMOTE_CMD_ENABLE_LASER_SAFETY      0U  /* simplified: laser invalid/too-close never locks chassis. */
+
+typedef enum
+{
+    REMOTE_CMD_LINK_WAITING = 0,
+    REMOTE_CMD_LINK_ALIVE,
+    REMOTE_CMD_LINK_TIMEOUT
+} RemoteCmdLinkState_t;
+
+typedef struct
+{
+    RemoteCmdLinkState_t link_state;
+    MecanumState_t chassis_state;
+    MecanumVelocity_t target_velocity;
+    uint32_t last_rx_ms;
+    uint32_t last_valid_cmd_ms;
+    uint32_t last_status_ms;
+    uint32_t last_sensor_stream_ms;
+    uint8_t laser_emergency;
+    uint8_t laser_fault;
+    uint8_t heartbeat_timeout;
+    uint8_t sensor_stream_enable;
+    uint8_t rx_overrun_count;
+    uint8_t parse_error_count;
+} RemoteCmdStatus_t;
+
+/*
+ * Raspberry Pi UART line protocol, LF or CRLF terminated:
+ *   HB                       refresh heartbeat only
+ *   VEL <vx> <vy> <wz>       velocity in m/s, m/s, rad/s
+ *   STOP                     controlled stop
+ *   ESTOP                    software emergency stop; release with CLR
+ *   CLR / CLEAR              clear laser/heartbeat/emergency lock after safe
+ *   ZERO                     stop and zero IMU yaw reference
+ *   GYROCAL                  start runtime gyro bias calibration; keep chassis still
+ *   ACCCAL                   run JY61P hardware accelerometer calibration
+ *   IMU?                     return full IMU values
+ *   LASER?                   return full laser values
+ *   SENS?                    return IMU + laser summary
+ *   SENS_STREAM ON/OFF       enable/disable periodic SENS frames on USART2
+ *   SC ON/OFF / SC?          straight-line closed-loop controller switch/status
+ *   STAT? / STATUS?          request one status frame immediately
+ */
+void RemoteCmd_Init(UART_HandleTypeDef *huart);
+void RemoteCmd_Loop(void);
+void RemoteCmd_UartRxCpltCallback(UART_HandleTypeDef *huart);
+RemoteCmdStatus_t RemoteCmd_GetStatus(void);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
+

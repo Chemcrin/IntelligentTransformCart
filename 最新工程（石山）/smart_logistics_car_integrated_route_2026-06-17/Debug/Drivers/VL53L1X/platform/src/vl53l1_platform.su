@@ -1,0 +1,14 @@
+../Drivers/VL53L1X/platform/src/vl53l1_platform.c:9:27:vl53l1_i2c_handle	16	static
+../Drivers/VL53L1X/platform/src/vl53l1_platform.c:14:14:VL53L1_WriteMulti	48	static
+../Drivers/VL53L1X/platform/src/vl53l1_platform.c:37:14:VL53L1_ReadMulti	48	static
+../Drivers/VL53L1X/platform/src/vl53l1_platform.c:60:14:VL53L1_WrByte	16	static
+../Drivers/VL53L1X/platform/src/vl53l1_platform.c:65:14:VL53L1_WrWord	16	static
+../Drivers/VL53L1X/platform/src/vl53l1_platform.c:72:14:VL53L1_WrDWord	24	static
+../Drivers/VL53L1X/platform/src/vl53l1_platform.c:81:14:VL53L1_RdByte	24	static
+../Drivers/VL53L1X/platform/src/vl53l1_platform.c:86:14:VL53L1_RdWord	32	static
+../Drivers/VL53L1X/platform/src/vl53l1_platform.c:96:14:VL53L1_RdDWord	32	static
+../Drivers/VL53L1X/platform/src/vl53l1_platform.c:109:14:VL53L1_WaitUs	24	static
+../Drivers/VL53L1X/platform/src/vl53l1_platform.c:120:14:VL53L1_WaitMs	16	static
+../Drivers/VL53L1X/platform/src/vl53l1_platform.c:130:14:VL53L1_GetTimerFrequency	16	static
+../Drivers/VL53L1X/platform/src/vl53l1_platform.c:136:14:VL53L1_GetTickCount	16	static
+../Drivers/VL53L1X/platform/src/vl53l1_platform.c:142:14:VL53L1_WaitValueMaskEx	32	static

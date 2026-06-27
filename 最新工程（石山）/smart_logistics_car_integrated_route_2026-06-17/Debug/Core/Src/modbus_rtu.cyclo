@@ -1,0 +1,11 @@
+../Core/Src/modbus_rtu.c:8:13:Modbus_DelayUs	3
+../Core/Src/modbus_rtu.c:21:13:Modbus_EnableDwtCycleCounter	1
+../Core/Src/modbus_rtu.c:27:6:RS485_RX_ENABLE	1
+../Core/Src/modbus_rtu.c:34:6:RS485_TX_ENABLE	1
+../Core/Src/modbus_rtu.c:41:6:Modbus_Init	1
+../Core/Src/modbus_rtu.c:49:10:Modbus_CRC16	4
+../Core/Src/modbus_rtu.c:69:17:Modbus_SendRaw	8
+../Core/Src/modbus_rtu.c:99:17:Modbus_Transceive	8
+../Core/Src/modbus_rtu.c:142:17:Modbus_WriteMultipleRegisters	7
+../Core/Src/modbus_rtu.c:181:17:Modbus_ReadInputRegisters	10
+../Core/Src/modbus_rtu.c:223:15:Modbus_GetState	1

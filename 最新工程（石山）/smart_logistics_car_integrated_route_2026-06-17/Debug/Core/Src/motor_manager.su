@@ -1,0 +1,11 @@
+../Core/Src/motor_manager.c:16:6:MotorManager_Init	16	static
+../Core/Src/motor_manager.c:31:17:MotorManager_EnableAll	24	static
+../Core/Src/motor_manager.c:49:17:MotorManager_SetWheelRpm	40	static
+../Core/Src/motor_manager.c:73:17:MotorManager_StopAll	24	static
+../Core/Src/motor_manager.c:80:17:MotorManager_EmergencyStop	8	static
+../Core/Src/motor_manager.c:86:17:MotorManager_UpdateFeedback	4	static
+../Core/Src/motor_manager.c:91:28:MotorManager_GetStates	4	static
+../Core/Src/motor_manager.c:96:6:MotorManager_SetDirectionSigns	24	static
+../Core/Src/motor_manager.c:109:15:MotorManager_GetDirectionSigns	4	static
+../Core/Src/motor_manager.c:114:9:MotorManager_HasFault	4	static
+../Core/Src/motor_manager.c:119:17:Mecanum_TestMotorDirection	24	static

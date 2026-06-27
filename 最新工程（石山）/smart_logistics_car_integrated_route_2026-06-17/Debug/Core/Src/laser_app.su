@@ -1,0 +1,4 @@
+../Core/Src/laser_app.c:22:13:laser_app_publish	24	static
+../Core/Src/laser_app.c:40:6:Laser_App_Init	16	static
+../Core/Src/laser_app.c:52:6:Laser_App_Loop	16	static
+../Core/Src/laser_app.c:85:29:Laser_App_GetDevice	4	static
