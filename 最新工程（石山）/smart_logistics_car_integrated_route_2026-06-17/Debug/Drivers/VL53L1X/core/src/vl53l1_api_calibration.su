@@ -1,4 +1,0 @@
-../Drivers/VL53L1X/core/src/vl53l1_api_calibration.c:104:14:VL53L1_run_ref_spad_char	64	static
-../Drivers/VL53L1X/core/src/vl53l1_api_calibration.c:297:14:VL53L1_run_offset_calibration	216	static
-../Drivers/VL53L1X/core/src/vl53l1_api_calibration.c:705:14:VL53L1_run_spad_rate_map	32	static
-../Drivers/VL53L1X/core/src/vl53l1_api_calibration.c:800:14:VL53L1_run_device_test	32	static
